@@ -1,4 +1,4 @@
-# Soluciones — Prácticas 1, 2 y 3
+# Soluciones — Prácticas 1, 2, 3 y 4
 
 > Sólo enunciado y código. El razonamiento, las trazas y los errores que se penalizan están en los `.md` individuales de cada ejercicio.
 
@@ -6,6 +6,7 @@
 - [Práctica 1 — Variables compartidas](#práctica-1--variables-compartidas): [1](#p1--1) · [2](#p1--2) · [3](#p1--3) · [4](#p1--4)
 - [Práctica 2 — Semáforos](#práctica-2--semáforos): [1](#p2--1) · [2](#p2--2) · [3](#p2--3) · [4](#p2--4) · [5](#p2--5) · [6](#p2--6) · [7](#p2--7) · [8](#p2--8) · [9](#p2--9) · [10](#p2--10) · [11](#p2--11) · [12](#p2--12)
 - [Práctica 3 — Monitores](#práctica-3--monitores): [4](#p3--4) · [5](#p3--5)
+- [Práctica 4 — Pasaje de Mensajes](#práctica-4--pasaje-de-mensajes): PMA [1](#p4-pma--1) · [2](#p4-pma--2) · [3](#p4-pma--3) · [4](#p4-pma--4) · PMS [1](#p4-pms--1) · [2](#p4-pms--2) · [3](#p4-pms--3)
 
 ---
 
@@ -1089,3 +1090,455 @@ Process Empleado [id: 1..E]
 | **No, reparto dinámico** | **contador + `signalall` + bandera de salida** | **Corralón (c)**: si uno atiende 30 y otro 20, ninguno puede escribir un `for` |
 
 *Sanidad:* N `push` y N `pop` · cada `esperaEmpleado[i]` recibe un solo `signal` · `listo[i]` pasa a `true` una sola vez · con E = 1 el (b) colapsa al (a) · `while(true)` **siempre** en el proceso, nunca adentro del monitor.
+
+---
+
+# Práctica 4 — Pasaje de Mensajes
+
+> **Consideraciones de PMA:** canales compartidos por todos y FIFO · `send` no bloquea, `receive` sí · `empty` sí, pero no la cantidad de mensajes · `if`/`do` no determinístico (si ninguna opción es verdadera, sigue de largo) · evitar busy waiting · el tiempo con `delay`.
+
+## P4 PMA — 1
+*N clientes llegan a la cola de un banco y los atienden sus empleados, por orden de llegada.*
+
+**Cliente/servidor:** el id viaja en el pedido y cada cliente tiene su canal de respuesta privado. El orden de llegada lo da el canal, que es FIFO.
+
+### a) Un empleado
+
+```
+chan Pedidos(int);              // el id del cliente
+chan Respuestas[1..N](texto);   // privado por cliente
+
+Process Cliente[id: 1..N]
+{ texto comp;
+  send Pedidos(id);
+  receive Respuestas[id](comp);
+}
+
+Process Empleado
+{ int idC; texto comp;
+  while (true) {
+     receive Pedidos(idC);
+     comp = atender(idC);
+     send Respuestas[idC](comp);
+  }
+}
+```
+
+### b) Dos empleados — **es la misma solución**
+
+`Process Empleado[id: 1..2]` con el mismo código: los dos leen del mismo canal FIFO. Un canal por empleado sólo si el cliente eligiera a uno.
+
+### c) Si no hay clientes, tareas administrativas 15 min — Coordinador
+
+**Sin procesos adicionales se puede, pero con demora innecesaria:** con un solo pedido, los dos empleados ven `not empty(Pedidos)`, uno se lo lleva y **el otro queda bloqueado en el `receive`** en vez de hacer tareas administrativas. Hace falta que `Pedidos` tenga **un solo receptor**.
+
+```
+chan Pedidos(int);              // el id del cliente
+chan PedidoEmple(int);          // el empleado libre pide trabajo
+chan Siguiente[1..2](int);      // id del cliente, o -1 si no hay nadie
+chan Respuestas[1..N](texto);
+
+Process Cliente[id: 1..N]
+{ texto comp;
+  send Pedidos(id);
+  receive Respuestas[id](comp);
+}
+
+Process Coordinador
+{ int idE, idC;
+  while (true) {
+     receive PedidoEmple(idE);
+     if (empty(Pedidos)) idC = -1;
+     else receive Pedidos(idC);
+     send Siguiente[idE](idC);       // SIEMPRE responde
+  }
+}
+
+Process Empleado[id: 1..2]
+{ int idC; texto comp;
+  while (true) {
+     send PedidoEmple(id);
+     receive Siguiente[id](idC);
+     if (idC <> -1) { comp = atender(idC);
+                      send Respuestas[idC](comp); }
+     else delay(15 min);
+  }
+}
+```
+
+*Sanidad:* el id del cliente viaja Cliente → `Pedidos` → Coordinador → `Siguiente[idE]` → Empleado → `Respuestas[idC]` · el empleado **nunca** lee `Pedidos` directo · el Coordinador responde siempre, si no el empleado se duerme en `Siguiente`.
+
+## P4 PMA — 2
+*5 cajas y P clientes. Cada cliente va a la caja con menos personas esperando; en cada caja se atiende por orden de llegada y se entrega un comprobante. Maximizar la concurrencia.*
+
+**Coordinador con `cant[5]` local.** Escucha llegadas y "terminé" **con prioridad a los "terminé"** (para asignar con contadores al día) y duerme en `Aviso` para no hacer busy waiting. **El destinatario es el índice del canal:** `Fila[caja]`, `Comprobante[cliente]`.
+
+```
+chan Llegada(int);                 // idC
+chan Termine(int);                 // idCaja que terminó
+chan Aviso(int);                   // "tenés un mensaje nuevo"
+chan Fila[1..5](int);              // una por caja: idC
+chan Comprobante[1..N](texto);     // una por cliente
+
+Process Cliente[id: 1..N]
+{ texto comp;
+  send Llegada(id);
+  send Aviso(1);                   // DESPUÉS del mensaje
+  receive Comprobante[id](comp);
+}
+
+Process Coordinador
+{ int cant[1..5] = ([5] 0);
+  int ok, idC, idCaja, minID;
+  while (true) {
+     receive Aviso(ok);
+     if (not empty(Termine)) ->
+           receive Termine(idCaja);
+           cant[idCaja]--;
+     [] (not empty(Llegada)) and (empty(Termine)) ->
+           receive Llegada(idC);
+           minID = cajaConMenos(cant);
+           cant[minID]++;
+           send Fila[minID](idC);
+     fi
+  }
+}
+
+Process Caja[id: 1..5]
+{ int idC; texto comp;
+  while (true) {
+     receive Fila[id](idC);
+     comp = atenderPago(idC);
+     send Comprobante[idC](comp);
+     send Termine(id);
+     send Aviso(1);                // DESPUÉS del mensaje
+  }
+}
+```
+
+*Sanidad:* **avisan todos** los que le mandan algo al Coordinador, y **después** del mensaje (invariante: avisos = mensajes pendientes) · un `receive` **no filtra por valor**: un único canal `Derivacion(caja, idC)` deja que cualquier caja se lleve cualquier cliente · cada `cant[c]++` tiene su `cant[c]--`.
+
+## P4 PMA — 3
+*Comida rápida: C clientes, 3 vendedores, 2 cocineros. Cualquier vendedor toma el pedido y se lo pasa a los cocineros; si no hay pedidos, reponen bebidas (1 a 3 min). El cocinero le entrega el plato directo al cliente. Maximizar la concurrencia.*
+
+**Tres moldes:** vendedores que reponen ⇒ **Coordinador único lector** de `Pedidos` (como el 1 c) · vendedor → cocineros: deja la comanda **y sigue**, un solo canal para los 2 cocineros · cocinero → cliente: respuesta privada `Producto[idC]`.
+
+```
+chan Pedidos(int, texto);          // idC, pedido
+chan PedidoVend(int);              // idV
+chan Siguiente[1..3](int, texto);  // idC (o -1), pedido
+chan Comanda(int, texto);          // idC, pedido
+chan Producto[1..C](texto);        // privado por cliente
+
+Process Cliente[id: 1..C]
+{ texto pedido, plato;
+  pedido = elegirPedido();
+  send Pedidos(id, pedido);
+  receive Producto[id](plato);
+}
+
+Process Coordinador
+{ texto pedido; int idV, idC;
+  while (true) {
+     receive PedidoVend(idV);
+     if (empty(Pedidos)) { idC = -1; pedido = ""; }
+     else receive Pedidos(idC, pedido);
+     send Siguiente[idV](idC, pedido);    // SIEMPRE responde
+  }
+}
+
+Process Vendedor[id: 1..3]
+{ int idC; texto pedido;
+  while (true) {
+     send PedidoVend(id);
+     receive Siguiente[id](idC, pedido);
+     if (idC <> -1) send Comanda(idC, pedido);   // y sigue
+     else delay(random(1, 3) min);               // repone bebidas
+  }
+}
+
+Process Cocinero[id: 1..2]
+{ int idC; texto pedido, plato;
+  while (true) {
+     receive Comanda(idC, pedido);
+     plato = cocinar(pedido);
+     send Producto[idC](plato);
+  }
+}
+```
+
+*Sanidad:* los cocineros **no** necesitan Coordinador: si no hay comandas no tienen otra cosa que hacer · con 1 vendedor el Coordinador sobra (alcanza `empty`) · el `idC` viaja Cliente → `Pedidos` → Coordinador → `Siguiente` → Vendedor → `Comanda` → Cocinero → `Producto[idC]`.
+
+## P4 PMA — 4
+*Locutorio con 10 cabinas y un empleado que atiende a N clientes. El cliente espera que el empleado le indique la cabina, la usa y después le paga; recibe un ticket. El empleado atiende en el orden en que hacen los pedidos. Maximizar la concurrencia.*
+
+**Administrador de recurso:** `libres` + `cabinas` + **cola de pendientes** (= `wait`). Al pagar, si alguien espera, **la cabina se entrega** (= `signal`) y `libres` no sube. **Entre canales no hay orden** ⇒ el (a) va con un solo canal con tipo.
+
+### a) Orden de llegada — un canal con tipo
+
+```
+chan Pedidos(texto, int, int);     // tipo, idC, idCabina
+chan Respuesta[1..N](int);
+chan Ticket[1..N](texto);
+
+Process Cliente[id: 1..N]
+{ int miCabina; texto t;
+  send Pedidos("cabina", id, -1);
+  receive Respuesta[id](miCabina);
+  usarCabina(miCabina);
+  send Pedidos("pago", id, miCabina);
+  receive Ticket[id](t);
+}
+
+Process Empleado
+{ int libres = 10; set cabinas = {1..10}; cola esperando;
+  texto tipo, t; int idC, idCab, sig;
+  while (true) {
+     receive Pedidos(tipo, idC, idCab);
+     if (tipo == "cabina") {
+        if (libres > 0) { libres--; remove(cabinas, idCab);
+                          send Respuesta[idC](idCab); }
+        else push(esperando, idC);
+     }
+     else {
+        t = Cobrar(idC);
+        send Ticket[idC](t);
+        if (not empty(esperando)) { pop(esperando, sig);
+                                    send Respuesta[sig](idCab); }
+        else { libres++; insert(cabinas, idCab); }
+     }
+  }
+}
+```
+
+### b) Prioridad a los que terminaron — dos canales + `Aviso`
+
+Las ramas son las del (a). Cambia sólo cómo elige.
+
+```
+chan PedidoCabina(int);            // idC
+chan Pago(int, int);               // idC, idCabina
+chan Respuesta[1..N](int);
+chan Ticket[1..N](texto);
+chan Aviso(int);
+
+Process Cliente[id: 1..N]
+{ int miCabina; texto t;
+  send PedidoCabina(id);  send Aviso(1);
+  receive Respuesta[id](miCabina);
+  usarCabina(miCabina);
+  send Pago(id, miCabina);  send Aviso(1);
+  receive Ticket[id](t);
+}
+
+Process Empleado
+{ int libres = 10; set cabinas = {1..10}; cola esperando;
+  texto t; int ok, idC, idCab, sig;
+  while (true) {
+     receive Aviso(ok);
+     if (not empty(Pago)) ->
+           receive Pago(idC, idCab);
+           t = Cobrar(idC);
+           send Ticket[idC](t);
+           if (not empty(esperando)) { pop(esperando, sig);
+                                       send Respuesta[sig](idCab); }
+           else { libres++; insert(cabinas, idCab); }
+     [] (not empty(PedidoCabina)) and (empty(Pago)) ->
+           receive PedidoCabina(idC);
+           if (libres > 0) { libres--; remove(cabinas, idCab);
+                             send Respuesta[idC](idCab); }
+           else push(esperando, idC);
+     fi
+  }
+}
+```
+
+*Sanidad:* sólo espera el que **pide** cabina (un pago siempre se atiende) · después del `pop` **no** se hace otro `receive` · `disponible` dice cuántas, `remove` dice cuál · cada mensaje del (b) tiene su `Aviso`, después.
+
+---
+
+> **Consideraciones de PMS:** no hay canales, se nombra al proceso (`Destino!port(...)`, `Origen?port(...)`) · envío y recepción bloquean · no hay `empty` de canales · `[*]` sólo en la recepción, **sin orden** · guardas `condición; recepción -> acciones`, **sólo con recepciones**, condiciones sobre variables locales.
+
+## P4 PMS — 1
+*R Examinadores encuentran sitios web, se los avisan a 1 Analizador, esperan su respuesta y siguen buscando.*
+
+### b) Sin orden — `[*]` alcanza
+
+```
+Process Examinador[id: 1..R]
+{ texto sitio, res;
+  while (true) {
+     sitio = buscarSitio();
+     Analizador!pedido(id, sitio);
+     Analizador?respuesta(res);
+  }
+}
+
+Process Analizador
+{ int idE; texto sitio, res;
+  while (true) {
+     Examinador[*]?pedido(idE, sitio);
+     res = analizar(sitio);
+     Examinador[idE]!respuesta(res);
+  }
+}
+```
+
+### c) Con orden — Admin con cola; el Analizador pide trabajo
+
+```
+Process Admin
+{ cola fila; int idE; texto sitio;
+  do Examinador[*]?pedido(idE, sitio)    -> push(fila, (idE, sitio));
+  [] not empty(fila); Analizador?listo() -> pop(fila, (idE, sitio));
+                                            Analizador!trabajo(idE, sitio);
+  od
+}
+
+Process Examinador[id: 1..R]
+{ texto sitio, res;
+  while (true) {
+     sitio = buscarSitio();
+     Admin!pedido(id, sitio);
+     Analizador?respuesta(res);
+  }
+}
+
+Process Analizador
+{ int idE; texto sitio, res;
+  while (true) {
+     Admin!listo();
+     Admin?trabajo(idE, sitio);
+     res = analizar(sitio);
+     Examinador[idE]!respuesta(res);
+  }
+}
+```
+
+### d) Sin esperar la respuesta
+
+**Sí cambia:** en PMS el envío bloquea, así que sin respuesta el Examinador **igual espera** en `Analizador!pedido` a que el Analizador se desocupe. Hace falta un **Admin buffer** (siempre dispuesto a recibir): queda como el (c) sin la respuesta.
+
+*Sanidad:* en las guardas sólo recepciones (el servidor **pide** trabajo porque un envío no puede ir en una guarda) · el id viaja en el mensaje porque en el `!` no hay `[*]` · el Admin aparece en (c) para **ordenar** y en (d) para **no bloquear al emisor**.
+
+## P4 PMS — 2
+*Laboratorio: el 1º prepara muestras y se las manda al 2º sin esperar; el 2º arma el set, se lo pasa al 3º, espera el resultado y lo archiva; el 3º analiza y le devuelve el resultado al 2º.*
+
+**1º → 2º: Admin buffer** (en PMS el envío bloquea y el 2º está ocupado esperando el análisis) · **2º ↔ 3º: directo** (S1).
+
+```
+Process Empleado1
+{ texto m;
+  while (true) { m = prepararMuestra(); Admin!muestra(m); }
+}
+
+Process Admin
+{ cola buffer; texto m;
+  do Empleado1?muestra(m)                  -> push(buffer, m);
+  [] not empty(buffer); Empleado2?pedido() -> pop(buffer, m);
+                                              Empleado2!muestra(m);
+  od
+}
+
+Process Empleado2
+{ texto m, set, res;
+  while (true) {
+     Admin!pedido();
+     Admin?muestra(m);
+     set = armarSet(m);
+     Empleado3!analisis(set);
+     Empleado3?resultado(res);
+     archivar(res);
+  }
+}
+
+Process Empleado3
+{ texto set, res;
+  while (true) {
+     Empleado2?analisis(set);
+     res = analizar(set);
+     Empleado2!resultado(res);
+  }
+}
+```
+
+*Sanidad:* sin ids, porque todos son procesos únicos · la opción del Empleado1 sin condición = el Admin siempre recibe muestras.
+
+## P4 PMS — 3
+*N alumnos entregan su examen y esperan la nota; P profesores corrigen en el orden de entrega. Todos los procesos deben terminar.*
+
+**Admin con cola** (como PMS 1 c). **Terminación:** el `do` termina cuando todas sus condiciones son falsas · con P > 1, el Admin le manda un **`-1`** a cada profesor cuando ya no queda nada, y no termina hasta avisarles a los P.
+
+### a) P = 1
+
+```
+Process Admin
+{ cola Fila; texto E; int idA; int contador = 0;
+  do contador < N; Alumno[*]?examen(idA, E) -> push(Fila, (idA, E)); contador++;
+  [] not empty(Fila); Profesor?listo()      -> pop(Fila, (idA, E));
+                                               Profesor!trabajo(idA, E);
+  od
+}
+
+Process Profesor
+{ int i, idA, res; texto E;
+  for (i = 1 to N) {
+     Admin!listo();
+     Admin?trabajo(idA, E);
+     res = puntuar(E);
+     Alumno[idA]!nota(res);
+  }
+}
+
+Process Alumno[id: 1..N]
+{ texto examen; int res;
+  examen = resolverExamen();
+  Admin!examen(id, examen);
+  Profesor?nota(res);
+}
+```
+
+### b) P > 1 — el Admin avisa con `-1`
+
+```
+Process Admin
+{ cola Fila; texto E; int idA, idP; int contador = 0, terminados = 0;
+  do contador < N; Alumno[*]?examen(idA, E) -> push(Fila, (idA, E)); contador++;
+  [] not empty(Fila); Profesor[*]?listo(idP) -> pop(Fila, (idA, E));
+                                                Profesor[idP]!trabajo(idA, E);
+  [] (contador == N) and empty(Fila) and (terminados < P);
+        Profesor[*]?listo(idP) -> Profesor[idP]!trabajo(-1, ""); terminados++;
+  od
+}
+
+Process Profesor[id: 1..P]
+{ int idA, res; texto E; bool seguir = true;
+  while (seguir) {
+     Admin!listo(id);
+     Admin?trabajo(idA, E);
+     if (idA == -1) seguir = false;
+     else { res = puntuar(E); Alumno[idA]!nota(res); }
+  }
+}
+
+Process Alumno[id: 1..N]
+{ texto examen; int res;
+  examen = resolverExamen();
+  Admin!examen(id, examen);
+  Profesor[*]?nota(res);
+}
+```
+
+### c) Barrera al principio — antes del `do`
+
+```
+// En el Admin, antes del do del (b):
+for (i = 1 to N) Alumno[*]?llegue();
+for (i = 1 to N) Alumno[i]!empezar();
+
+// El Alumno, antes de resolver:
+Admin!llegue();
+Admin?empezar();
+```
+
+*Sanidad:* para cada proceso, *"¿quién le manda el mensaje que lo hace salir?"* · `[*]` sólo para recibir: para avisar a todos, un `for` (no hay broadcast) · cada alumno avisa que llegó **una** vez.

@@ -205,6 +205,40 @@ Process Empleado {
 ### A7 — Administrador de un recurso con N unidades (= monitor activo)
 **Se reconoce:** *"3 impresoras"*, *"10 cabinas"*, *"5 cajas"*, recursos que se piden y se devuelven.
 
+> **Lo que define al molde no es la cantidad de canales.** Es que el administrador lleva **qué unidades están libres** y una **cola de pendientes** para los pedidos que todavía no puede atender. Hay **dos versiones**, y las elige el enunciado:
+>
+> | Versión | Cuándo |
+> |---|---|
+> | **(a) Un canal con tipo de operación** (Teoría 5, filmina 24) | Importa **el orden entre todos los pedidos**: *"atiende en el orden en que hacen los pedidos"* |
+> | **(b) Dos canales + `if`** (filmina 26) | El orden entre tipos **no importa**, o hay que dar **prioridad** a uno (con `and empty(...)` + `Aviso`, molde A6) |
+>
+> **Entre canales no hay orden:** cada canal es FIFO por separado, pero el `if` no determinístico elige al azar entre ellos.
+
+**Versión (a): un canal con tipo.** El administrador sólo hace `receive`: se bloquea si no hay nada y saca siempre el más viejo.
+
+```
+chan Pedidos(texto tipo, int idC, int idU);   // "pedir" (idU = -1) o "liberar"
+chan Respuesta[1..N](int idU);
+
+Process Admin {
+  int libres = MAX; set unidades; cola pendientes;
+  while (true) {
+    receive Pedidos(tipo, idC, idU);
+    if (tipo == "pedir") {
+      if (libres > 0) { libres--; remove(unidades, idU); send Respuesta[idC](idU); }
+      else push(pendientes, idC);            // = wait: lo anoto, no respondo
+    }
+    else {                                   // "liberar"
+      if (not empty(pendientes)) { pop(pendientes, sig); send Respuesta[sig](idU); }  // = signal: SE ENTREGA
+      else { libres++; insert(unidades, idU); }
+    }
+  }
+}
+```
+Es el **PMA 4 (a)** (locutorio) casi textual.
+
+**Versión (b): dos canales + `if`.**
+
 ```
 chan pedido(int idC);
 chan liberar(int idU);
@@ -228,7 +262,9 @@ Process Cliente[id: 0..N-1] {
 }
 ```
 Es **el pozo de recursos** de semáforos (contador + cola de identidades), pero el contador vive en el servidor.
-Para respetar **orden de llegada** con espera: el servidor guarda los pedidos que no puede atender en una `cola pendientes`, y al liberar hace `pop` + `send` (versión de la filmina 24). Ese es el **"el recurso se entrega, no se libera"** de siempre.
+En esta versión el `disponible > 0` de la guarda deja los pedidos **en el canal** hasta que haya unidad, así que no hace falta cola de pendientes. Ojo: **sin `Aviso`, si no hay nada que hacer, el `while` da vueltas: busy waiting.** Para evitarlo, `Aviso` como en el molde A6.
+
+En las dos versiones vale el **"el recurso se entrega, no se libera"** de siempre: si alguien espera, la unidad pasa directo y `libres` no sube.
 
 ### A8 — Continuidad conversacional
 **Se reconoce:** *"cuando un docente lo atiende, le hace consultas hasta que no le queden dudas"*.

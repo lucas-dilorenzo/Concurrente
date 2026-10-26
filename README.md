@@ -73,7 +73,18 @@ En [`REPASOS CONCU/`](REPASOS%20CONCU/) están mis escrituras de práctica de lo
 
 ## ✉️ Práctica 4 — Pasaje de mensajes (PMA y PMS)
 
-*(Arrancando.)* Por ahora, el mapa de qué molde va en cada ejercicio está en la sección 5 del [repaso de PMA y PMS](REPASOS/Teoria%205%20y%206%20-%20Repaso%20(PMA%20y%20PMS).md).
+| Ej | Tema | Idea central |
+|---|---|---|
+| [PMA 1](PRACTICA/Practica%204%20-%20PMA%20Ejercicio%201.md) | Banco: 1 empleado, 2 empleados, tareas administrativas | **Cliente/servidor** (id en el pedido + respuesta privada) · `empty` con varios receptores → **Coordinador que siempre responde** |
+| [PMA 2](PRACTICA/Practica%204%20-%20PMA%20Ejercicio%202.md) | Banco con 5 cajas, la de menos gente | Coordinador que escucha a dos · **prioridad a los "terminé"** + canal `Aviso` · el destinatario es el índice del canal |
+| [PMA 3](PRACTICA/Practica%204%20-%20PMA%20Ejercicio%203.md) | Comida rápida: vendedores y cocineros | Tres moldes en uno · **¿para qué el Coordinador si el vendedor ya reparte?** → para que `Pedidos` tenga un solo lector |
+| [PMA 4](PRACTICA/Practica%204%20-%20PMA%20Ejercicio%204.md) | Locutorio con 10 cabinas (a, b) | **Administrador de recurso** con cola de pendientes · **entre canales no hay orden**: (a) un canal con tipo, (b) dos canales con prioridad |
+| [PMA 5](PRACTICA/Practica%204%20-%20PMA%20Ejercicio%205.md) | 3 impresoras y un director (a, b) · *(c, d, e pendientes)* | Impresoras = procesos: **dejar y seguir** · prioridad con varios receptores → Coordinador |
+| [PMS 1](PRACTICA/Practica%204%20-%20PMS%20Ejercicio%201.md) | Antivirus: Examinadores y Analizador (a–d) | **Cómo funciona la comunicación guardada** · `[*]` no ordena → Admin con cola · el servidor **pide** trabajo · en PMS el envío bloquea: Admin como buffer |
+| [PMS 2](PRACTICA/Practica%204%20-%20PMS%20Ejercicio%202.md) | Laboratorio: cadena de 3 empleados | **Admin buffer** entre el 1º y el 2º (el envío bloquea) · 2º ↔ 3º directo |
+| [PMS 3](PRACTICA/Practica%204%20-%20PMS%20Ejercicio%203.md) | Examen: N alumnos, P profesores (a, b, c) | **Terminación**: el `do` termina con todas las condiciones falsas · el Admin avisa con **`-1`** a cada profesor · barrera antes del `do` |
+
+*(En progreso.)* El mapa de qué molde va en cada ejercicio está en la sección 5 del [repaso de PMA y PMS](REPASOS/Teoria%205%20y%206%20-%20Repaso%20(PMA%20y%20PMS).md).
 
 ---
 

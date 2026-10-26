@@ -14,13 +14,15 @@
 
 **Hasta el 9 de noviembre, la prioridad es Memoria Distribuida.** Si se desaprueba el 9, el 30 de noviembre habría que recuperar los dos temas juntos y se arriesga la promoción.
 
-**Memoria Compartida queda en mantenimiento liviano**, para no olvidar la sintaxis y las trampas de cada mecanismo. Además, pasaje de mensajes repite los moldes de siempre (coordinador, prioridad, barrera, grupos), así que entrenarlo también sirve para el recuperatorio.
+**Memoria Compartida queda en pausa hasta el 9 de noviembre** (ajuste del 20 de octubre: el tiempo quedó justo). Pasaje de mensajes repite los moldes de siempre (coordinador, prioridad, barrera, grupos), así que entrenarlo también sirve para el recuperatorio.
 
 **Después del 9 de noviembre se invierte:** tres semanas enteras de Memoria Compartida.
 
 ---
 
-## Mantenimiento de Memoria Compartida (hasta el 31 de octubre)
+## Mantenimiento de Memoria Compartida — ⏸️ EN PAUSA hasta el 9 de noviembre
+
+> **Ajuste del 20 de octubre:** se pausa para concentrarse en Memoria Distribuida. Las tablas de abajo quedan como banco de ejercicios para retomar después del parcial. Si algún día sobran 5 minutos, un **planteo** (🧠) suma.
 
 Hay dos tipos de día:
 
@@ -31,10 +33,10 @@ Los ejercicios son de `PARCIAL 1 - MEMORIA COMPARTIDA/enunciados-viejos-memoria-
 
 | Semana | Foco | Lun 💻 | Mar 🧠 | Mié 💻 | Jue 🧠 | Vie 💻 |
 |---|---|---|---|---|---|---|
-| 13–17 oct | **Grupos y barrera** (lo que falló en el parcial) | S16 | S18 | M17 | M18 | S24 |
-| 20–24 oct | **Coordinador** en los dos mecanismos | S2 | S25 | M7 | M9 | S4 |
-| 27–31 oct | **PtB / PtC y prioridad** | S9 | S15 | M10 | M21 | M22 |
-| 3–7 nov | **Nada de Memoria Compartida.** Todo para el parcial del 9 | — | — | — | — | — |
+| 12–16 oct | **Grupos y barrera** (lo que falló en el parcial) | S16 | S18 | M17 | M18 | S24 |
+| 19–23 oct | **Coordinador** en los dos mecanismos | S2 | S25 | M7 | M9 | S4 |
+| 26–30 oct | **PtB / PtC y prioridad** | S9 | S15 | M10 | M21 | M22 |
+| 2–6 nov | **Nada de Memoria Compartida.** Todo para el parcial del 9 | — | — | — | — | — |
 
 **Si un día no da el tiempo, se saltea.** Si está pesada la semana de Memoria Distribuida, se sacrifica primero el día de código, nunca el de planteo.
 
@@ -44,12 +46,13 @@ Los ejercicios son de `PARCIAL 1 - MEMORIA COMPARTIDA/enunciados-viejos-memoria-
 
 | Semana | Qué |
 |---|---|
-| 8–12 oct | Leer `REPASOS/Teoria 5 y 6 - Repaso (PMA y PMS).md` · PMA ej. 1 y 2 |
-| 13–19 oct | PMA ej. 3, 4 y 5 · PMS ej. 1 y 2 |
-| 20–26 oct | PMS ej. 3, 4 y 5 · Repaso de la Teoría 7 (RPC y Rendezvous) |
-| 27 oct–2 nov | Práctica 5 (Ada) |
-| 3–8 nov | Enunciados viejos de Memoria Distribuida (**conseguirlos antes del 20 de octubre**) + **un simulacro cronometrado** |
+| 8–14 oct | ✅ Repaso de PMA y PMS · PMA ej. 1 a 5 (a, b) |
+| **20–26 oct** | **PMS ej. 1 a 5** · Repaso de la Teoría 7 (RPC y Rendezvous) |
+| **27 oct–2 nov** | **Práctica 5 (Ada)** |
+| 3–8 nov | Enunciados viejos de Memoria Distribuida (**conseguirlos ya**) + **un simulacro cronometrado** · si sobra tiempo, PMA 5 (c, d, e) |
 | **9 nov** | **Parcial** |
+
+> **Ajuste del 20 de octubre:** PMA 5 (c, d, e), la terminación, queda pospuesto. PMS va antes que Ada porque **las guardas de PMS son la base del `select when ... accept` de Ada**.
 
 **Formato de trabajo:** ping-pong. Vos escribís primero, yo corrijo. En cada ejercicio arrancamos por *"¿qué molde es y por qué?"* antes del código.
 
@@ -59,8 +62,8 @@ Los ejercicios son de `PARCIAL 1 - MEMORIA COMPARTIDA/enunciados-viejos-memoria-
 
 | Semana | Qué |
 |---|---|
-| 10–14 nov | **Lo que no se tocó:** repositor (S7, S17) y mezclas (M13, M23, S26). Pasar a código los que fueron sólo planteo: S18, M18, S25, M9 |
-| 17–21 nov | **Simulacro 1** (un S y un M, 2 horas, cronometrado) · corrección · S15, M21, S19, M3 |
-| 24–28 nov | **Simulacro 2** · corrección · repaso de los moldes y de las 5 reglas |
+| 10–13 nov | **Lo que no se tocó:** repositor (S7, S17) y mezclas (M13, M23, S26). Pasar a código los que fueron sólo planteo: S18, M18, S25, M9 |
+| 16–20 nov | **Simulacro 1** (un S y un M, 2 horas, cronometrado) · corrección · S15, M21, S19, M3 |
+| 23–27 nov | **Simulacro 2** · corrección · repaso de los moldes y de las 5 reglas |
 | 29 nov | Descanso. La noche antes no se estudia |
 | **30 nov** | **Fecha 2** |
