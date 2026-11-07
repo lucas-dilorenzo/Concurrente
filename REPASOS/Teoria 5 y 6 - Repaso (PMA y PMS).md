@@ -349,6 +349,39 @@ El cliente recibe la respuesta con `Servidor[*]?respuesta(res)`, porque no sabe 
 ### S5 — Barrera en PMS
 `for i: Persona[*]?llegue()` N veces, y después `for i: Persona[i]!empiecen()`.
 
+### Terminación: `for`, `while`, contador o `-1`
+**La pregunta:** *¿se sabe cuántos pedidos llegan en total?* (*"una vez"*, *"N exámenes"* → sí; *"continuamente"* → no).
+
+| | **Un servidor** | **Varios servidores** |
+|---|---|---|
+| **Con límite** | Admin con **contador** en la guarda · Servidor con **`for`** (PMS 3 a, PMS 4) | Admin con contador **+ opción que manda `-1`** · Servidor con `while (seguir)` (PMS 3 b) |
+| **Sin límite** | Admin sin contador · Servidor con `while (true)` (PMS 1) | Todos con `while (true)` |
+
+**El `do` termina cuando todas sus condiciones son falsas.** Una opción sin condición nunca falla, así que sin contador el `do` es un `while(true)`.
+
+**Con varios servidores no sirve el `for`:** son N trabajos en total, pero no se sabe cuántos le tocan a cada uno. El que cuenta (el Admin) le manda un `-1` a cada servidor cuando pide, y no termina hasta avisarles a todos:
+```
+Process Admin {
+  cola Fila; texto R; int idC, idS; int contador = 0, terminados = 0;
+  do contador < N; Cliente[*]?pedido(idC, R) -> push(Fila, (idC, R)); contador++;
+  [] not empty(Fila); Servidor[*]?listo(idS) -> pop(Fila, (idC, R));
+                                                Servidor[idS]!trabajo(idC, R);
+  [] (contador == N) and empty(Fila) and (terminados < S);
+        Servidor[*]?listo(idS) -> Servidor[idS]!trabajo(-1, ""); terminados++;
+  od
+}
+Process Servidor[id: 1..S] {
+  bool seguir = true;
+  while (seguir) {
+    Admin!listo(id);
+    Admin?trabajo(idC, R);
+    if (idC == -1) seguir = false;
+    else { res = resolver(R); Cliente[idC]!respuesta(res); }
+  }
+}
+```
+> **Chequeo:** por cada proceso, *"¿quién le manda el mensaje que lo hace salir?"*. Si es *"nadie"*, queda colgado.
+
 ### El deadlock típico de PMS
 Si **dos procesos hacen `!` al mismo tiempo**, uno al otro, y recién después `?`, los dos quedan bloqueados en el envío. **Siempre chequeá que cada `!` tenga su `?` del otro lado, en el orden correcto.**
 

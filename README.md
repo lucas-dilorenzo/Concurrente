@@ -83,6 +83,7 @@ En [`REPASOS CONCU/`](REPASOS%20CONCU/) están mis escrituras de práctica de lo
 | [PMS 1](PRACTICA/Practica%204%20-%20PMS%20Ejercicio%201.md) | Antivirus: Examinadores y Analizador (a–d) | **Cómo funciona la comunicación guardada** · `[*]` no ordena → Admin con cola · el servidor **pide** trabajo · en PMS el envío bloquea: Admin como buffer |
 | [PMS 2](PRACTICA/Practica%204%20-%20PMS%20Ejercicio%202.md) | Laboratorio: cadena de 3 empleados | **Admin buffer** entre el 1º y el 2º (el envío bloquea) · 2º ↔ 3º directo |
 | [PMS 3](PRACTICA/Practica%204%20-%20PMS%20Ejercicio%203.md) | Examen: N alumnos, P profesores (a, b, c) | **Terminación**: el `do` termina con todas las condiciones falsas · el Admin avisa con **`-1`** a cada profesor · barrera antes del `do` |
+| [PMS 4](PRACTICA/Practica%204%20-%20PMS%20Ejercicio%204.md) | Simulador de vuelo: sin orden, por id, por llegada (a, b, c) | **Exclusión mutua con empleado**: espera el `termino` antes del próximo · por id = posta con `for` · por llegada = Admin con cola · **tabla de terminación**: `for`/contador con límite, `while(true)` sin límite, `-1` con varios servidores |
 
 *(En progreso.)* El mapa de qué molde va en cada ejercicio está en la sección 5 del [repaso de PMA y PMS](REPASOS/Teoria%205%20y%206%20-%20Repaso%20(PMA%20y%20PMS).md).
 
@@ -93,7 +94,7 @@ En [`REPASOS CONCU/`](REPASOS%20CONCU/) están mis escrituras de práctica de lo
 | Fecha | Qué |
 |---|---|
 | 5 oct | Parcial de **Memoria Compartida** (semáforos y monitores) — ya rendido |
-| **9 nov** | Parcial de **Memoria Distribuida** (PMA, PMS y Ada) |
+| **12 nov** | Parcial de **Memoria Distribuida** (PMA, PMS y Ada). Era el 9; se pasó |
 | **30 nov** | **Fecha 2**, primer recuperatorio. Para promocionar el final, la cursada tiene que estar aprobada a más tardar acá |
 | 14 dic | Fecha 3 y examen de promoción |
 

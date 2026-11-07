@@ -6,7 +6,7 @@
 - [Práctica 1 — Variables compartidas](#práctica-1--variables-compartidas): [1](#p1--1) · [2](#p1--2) · [3](#p1--3) · [4](#p1--4)
 - [Práctica 2 — Semáforos](#práctica-2--semáforos): [1](#p2--1) · [2](#p2--2) · [3](#p2--3) · [4](#p2--4) · [5](#p2--5) · [6](#p2--6) · [7](#p2--7) · [8](#p2--8) · [9](#p2--9) · [10](#p2--10) · [11](#p2--11) · [12](#p2--12)
 - [Práctica 3 — Monitores](#práctica-3--monitores): [4](#p3--4) · [5](#p3--5)
-- [Práctica 4 — Pasaje de Mensajes](#práctica-4--pasaje-de-mensajes): PMA [1](#p4-pma--1) · [2](#p4-pma--2) · [3](#p4-pma--3) · [4](#p4-pma--4) · PMS [1](#p4-pms--1) · [2](#p4-pms--2) · [3](#p4-pms--3)
+- [Práctica 4 — Pasaje de Mensajes](#práctica-4--pasaje-de-mensajes): PMA [1](#p4-pma--1) · [2](#p4-pma--2) · [3](#p4-pma--3) · [4](#p4-pma--4) · PMS [1](#p4-pms--1) · [2](#p4-pms--2) · [3](#p4-pms--3) · [4](#p4-pms--4)
 
 ---
 
@@ -1542,3 +1542,79 @@ Admin?empezar();
 ```
 
 *Sanidad:* para cada proceso, *"¿quién le manda el mensaje que lo hace salir?"* · `[*]` sólo para recibir: para avisar a todos, un `for` (no hay broadcast) · cada alumno avisa que llegó **una** vez.
+
+## P4 PMS — 4
+*Un simulador de vuelo con exclusión mutua, un empleado que lo administra y P personas que lo usan una vez cada una.*
+
+**Molde S4:** el empleado da el paso y **espera el `termino` antes de dejar pasar a otro** (de ahí sale la exclusión mutua) · `for` de P vueltas porque cada persona lo usa una vez · lo único que cambia entre ítems es **a quién atiende**.
+
+### a) Sin orden
+
+```
+Process Empleado
+{ int i, idP;
+  for (i = 1 to P) {
+     Persona[*]?pedido(idP);
+     Persona[idP]!pasa();
+     Persona[idP]?termino();
+  }
+}
+
+Process Persona[id: 1..P]
+{ Empleado!pedido(id);
+  Empleado?pasa();
+  usarSimulador();
+  Empleado!termino();
+}
+```
+
+### b) Por orden de id — la posta
+
+```
+Process Empleado
+{ int i;
+  for (i = 1 to P) {
+     Persona[i]?pedido();
+     Persona[i]!pasa();
+     Persona[i]?termino();
+  }
+}
+
+Process Persona[id: 1..P]
+{ Empleado!pedido();
+  Empleado?pasa();
+  usarSimulador();
+  Empleado!termino();
+}
+```
+
+### c) Por orden de llegada — Admin con cola
+
+```
+Process Admin
+{ cola Fila; int idP; int contador = 0;
+  do contador < P; Persona[*]?pedido(idP) -> push(Fila, idP); contador++;
+  [] not empty(Fila); Empleado?proximo()  -> pop(Fila, idP);
+                                             Empleado!siguiente(idP);
+  od
+}
+
+Process Empleado
+{ int i, idP;
+  for (i = 1 to P) {
+     Admin!proximo();
+     Admin?siguiente(idP);
+     Persona[idP]!pasa();
+     Persona[idP]?termino();
+  }
+}
+
+Process Persona[id: 1..P]
+{ Admin!pedido(id);
+  Empleado?pasa();
+  usarSimulador();
+  Empleado!termino();
+}
+```
+
+*Sanidad:* el orden por id se conoce antes de empezar (alcanza el `for`); el de llegada no (hace falta alguien que anote: el Admin) · **con límite** → Admin con contador y servidor con `for`; **sin límite** → `while (true)`; **varios servidores con límite** → `-1` (PMS 3 b).
