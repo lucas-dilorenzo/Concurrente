@@ -89,6 +89,14 @@ En [`REPASOS CONCU/`](REPASOS%20CONCU/) están mis escrituras de práctica de lo
 
 *(En progreso.)* El mapa de qué molde va en cada ejercicio está en la sección 5 del [repaso de PMA y PMS](REPASOS/Teoria%205%20y%206%20-%20Repaso%20(PMA%20y%20PMS).md).
 
+## 🤝 Práctica 5 — Rendezvous (Ada)
+
+| Ej | Tema | Idea central |
+|---|---|---|
+| [2](PRACTICA/Practica%205%20-%20Ejercicio%202.md) | Banco con un empleado: normal, 10 min, inmediato, 10 min + otro intento (a–d) | **Sintaxis armada de a poco** · una llamada va y vuelve: sin Admin ni id · el tiempo lo maneja el **cliente** (`or delay` / `else`) · `select` anidados · los dos tipos de `select` |
+
+*(En progreso.)* El mapa de qué molde va en cada ejercicio está en la sección 6 del [repaso de Rendezvous y Ada](REPASOS/Teoria%207%20-%20Repaso%20(Rendezvous%20y%20Ada).md).
+
 ---
 
 ## 🎯 Preparación de los parciales

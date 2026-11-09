@@ -1,4 +1,4 @@
-# Soluciones — Prácticas 1, 2, 3 y 4
+# Soluciones — Prácticas 1, 2, 3, 4 y 5
 
 > Sólo enunciado y código. El razonamiento, las trazas y los errores que se penalizan están en los `.md` individuales de cada ejercicio.
 
@@ -7,6 +7,7 @@
 - [Práctica 2 — Semáforos](#práctica-2--semáforos): [1](#p2--1) · [2](#p2--2) · [3](#p2--3) · [4](#p2--4) · [5](#p2--5) · [6](#p2--6) · [7](#p2--7) · [8](#p2--8) · [9](#p2--9) · [10](#p2--10) · [11](#p2--11) · [12](#p2--12)
 - [Práctica 3 — Monitores](#práctica-3--monitores): [4](#p3--4) · [5](#p3--5)
 - [Práctica 4 — Pasaje de Mensajes](#práctica-4--pasaje-de-mensajes): PMA [1](#p4-pma--1) · [2](#p4-pma--2) · [3](#p4-pma--3) · [4](#p4-pma--4) · PMS [1](#p4-pms--1) · [2](#p4-pms--2) · [3](#p4-pms--3) · [4](#p4-pms--4) · [5](#p4-pms--5)
+- [Práctica 5 — Rendezvous (Ada)](#práctica-5--rendezvous-ada): [2](#p5--2)
 
 ---
 
@@ -1647,3 +1648,93 @@ Process Espectador[id: 1..E]
 ```
 
 *Sanidad:* `empty(Fila)` **no** dice si la máquina está libre (nadie esperando ≠ nadie usando) · con Empleado aparte (4 c) es un coordinador; con un solo Admin es PtB.
+
+---
+
+# Práctica 5 — Rendezvous (Ada)
+
+> **Consideraciones de la Práctica 5:** no hay variables compartidas · los parámetros del `accept` sólo existen en su cuerpo · `select` del cliente: **una** llamada y **una** opción (`or delay` o `else`) · `select` del servidor: varios `accept` con o sin `when`, sin mezclar con llamadas · después de un `when` siempre un `accept`, y la condición no usa los parámetros · `'count` sólo lo consulta la tarea dueña del entry · aprovechar la comunicación bidireccional.
+
+## P5 — 2
+*Banco con un único empleado que atiende por orden de llegada; clientes que pagan y retiran el comprobante.*
+
+**R1:** el comprobante vuelve por el `OUT` de la misma llamada · el orden de llegada es gratis (cola FIFO del entry) · los tiempos los maneja **el cliente**; el Empleado es el mismo en los cuatro ítems.
+
+### a) Normal
+
+```ada
+Procedure Banco is
+   task Empleado is
+      entry Pago (pago: IN texto; comprobante: OUT texto);
+   end Empleado;
+
+   task type Cliente;
+   arrClientes: array (1..N) of Cliente;
+
+   task body Empleado is
+   begin
+      loop
+         accept Pago (pago: IN texto; comprobante: OUT texto) do
+            comprobante := atender(pago);
+         end Pago;
+      end loop;
+   end Empleado;
+
+   task body Cliente is
+      miPago, miComprobante: texto;
+   begin
+      Empleado.Pago(miPago, miComprobante);
+   end Cliente;
+
+begin
+   null;
+end Banco;
+```
+
+### b) A lo sumo 10 minutos
+
+```ada
+task body Cliente is
+   miPago, miComprobante: texto;
+begin
+   select
+      Empleado.Pago(miPago, miComprobante);
+   or delay 600.0;
+      null;
+   end select;
+end Cliente;
+```
+
+### c) Sólo si lo atienden inmediatamente
+
+```ada
+task body Cliente is
+   miPago, miComprobante: texto;
+begin
+   select
+      Empleado.Pago(miPago, miComprobante);
+   else
+      null;
+   end select;
+end Cliente;
+```
+
+### d) 10 minutos y otro intento inmediato
+
+```ada
+task body Cliente is
+   miPago, miComprobante: texto;
+begin
+   select
+      Empleado.Pago(miPago, miComprobante);
+   or delay 600.0;
+      select
+         Empleado.Pago(miPago, miComprobante);
+      else
+         null;
+      end select;
+   end select;
+end Cliente;
+```
+
+*Sanidad:* tiempo con decimal (`600.0`) · después de `or delay`/`else` siempre una sentencia (`null;`) · dos `select`, dos `end select`.
