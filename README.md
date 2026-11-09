@@ -29,6 +29,7 @@ Apuntes propios de la cursada: resoluciones comentadas de las prácticas y repas
 | [Clase 3 — Semáforos](REPASOS/Clase%203%20-%20Repaso%20(Semaforos).md) | El semáforo y sus 3 usos según el valor inicial · SBS · contadores de recursos · alocación · **Passing the Baton** · lectores/escritores |
 | [Teoría 4 — Monitores](REPASOS/Teoria%204%20-%20Repaso%20(Monitores).md) | Exclusión mutua implícita vs. sincronización explícita · `wait`/`signal` vs. `P`/`V` · **signal-and-continue y la regla del `while`** · las 6 técnicas · bloquearse dentro de un monitor |
 | [Teorías 5 y 6 — PMA y PMS](REPASOS/Teoria%205%20y%206%20-%20Repaso%20(PMA%20y%20PMS).md) | Qué cambia sin memoria compartida · PMA vs. PMS lado a lado · **moldes base** (A1–A9 de PMA, S1–S5 de PMS) · machete de reconocimiento · mapa de la Práctica 4 · puente a RPC y Rendezvous |
+| [Teoría 7 — Rendezvous y Ada](REPASOS/Teoria%207%20-%20Repaso%20(Rendezvous%20y%20Ada).md) | Qué cambia respecto de PMS (una llamada va y vuelve) · consideraciones de la Práctica 5 · sintaxis mínima · cuándo usar `'count` · **moldes R1–R9** · mapa de la Práctica 5 |
 | [**Pistas de enunciados**](REPASOS/Pistas%20de%20enunciados.md) | **Diccionario frase → mecanismo**, armado sobre los 19 enunciados de las prácticas 1 y 2. Incluye una chuleta de una carilla |
 | [Glosario](REPASOS/Glosario.md) | Términos transversales |
 
