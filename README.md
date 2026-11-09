@@ -84,6 +84,7 @@ En [`REPASOS CONCU/`](REPASOS%20CONCU/) están mis escrituras de práctica de lo
 | [PMS 2](PRACTICA/Practica%204%20-%20PMS%20Ejercicio%202.md) | Laboratorio: cadena de 3 empleados | **Admin buffer** entre el 1º y el 2º (el envío bloquea) · 2º ↔ 3º directo |
 | [PMS 3](PRACTICA/Practica%204%20-%20PMS%20Ejercicio%203.md) | Examen: N alumnos, P profesores (a, b, c) | **Terminación**: el `do` termina con todas las condiciones falsas · el Admin avisa con **`-1`** a cada profesor · barrera antes del `do` |
 | [PMS 4](PRACTICA/Practica%204%20-%20PMS%20Ejercicio%204.md) | Simulador de vuelo: sin orden, por id, por llegada (a, b, c) | **Exclusión mutua con empleado**: espera el `termino` antes del próximo · por id = posta con `for` · por llegada = Admin con cola · **tabla de terminación**: `for`/contador con límite, `while(true)` sin límite, `-1` con varios servidores |
+| [PMS 5](PRACTICA/Practica%204%20-%20PMS%20Ejercicio%205.md) | Máquina expendedora, E espectadores, orden de llegada | **Sin empleado**: un Admin que anota y da acceso → `do` de dos opciones + `bool libre` = **Passing the Baton** · `empty(Fila)` ≠ máquina libre |
 
 *(En progreso.)* El mapa de qué molde va en cada ejercicio está en la sección 5 del [repaso de PMA y PMS](REPASOS/Teoria%205%20y%206%20-%20Repaso%20(PMA%20y%20PMS).md).
 

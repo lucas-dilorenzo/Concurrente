@@ -345,6 +345,7 @@ El cliente recibe la respuesta con `Servidor[*]?respuesta(res)`, porque no sabe 
 | Sin orden | `Persona[*]?pido(id)` → `Persona[id]!pasa()` → `Persona[id]?termine()` |
 | **Orden por id** | `for i = 0..P-1`: `Persona[i]?pido()` → `Persona[i]!pasa()` → `Persona[i]?termine()`. Es **la posta**, pero la lleva el empleado |
 | **Orden de llegada** | Un Admin con cola (S2) entre las personas y el empleado |
+| **Orden de llegada, sin empleado** | Un solo Admin con `do` de dos opciones (`pedido` / `termino`) + `bool libre`: es **Passing the Baton** (PMS 5) |
 
 ### S5 — Barrera en PMS
 `for i: Persona[*]?llegue()` N veces, y después `for i: Persona[i]!empiecen()`.
@@ -424,7 +425,7 @@ Si **dos procesos hacen `!` al mismo tiempo**, uno al otro, y recién después `
 | PMS 2 (laboratorio, 3 empleados en cadena) | **S2** como buffer entre el 1º y el 2º; el 2º y el 3º es **S1** |
 | PMS 3 (examen, N alumnos, P profesores) | (a) **S2**; (b) **S3**; (c) + **S5** |
 | PMS 4 (simulador de vuelo) | **S4**: (a) sin orden; (b) por id; (c) orden de llegada con Admin |
-| PMS 5 (máquina expendedora) | **S4**(c): orden de llegada con Admin |
+| PMS 5 (máquina expendedora) | **S4** sin empleado: **un solo Admin** que anota y da acceso, con `bool libre` = **Passing the Baton** |
 
 ---
 

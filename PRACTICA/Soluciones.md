@@ -6,7 +6,7 @@
 - [Práctica 1 — Variables compartidas](#práctica-1--variables-compartidas): [1](#p1--1) · [2](#p1--2) · [3](#p1--3) · [4](#p1--4)
 - [Práctica 2 — Semáforos](#práctica-2--semáforos): [1](#p2--1) · [2](#p2--2) · [3](#p2--3) · [4](#p2--4) · [5](#p2--5) · [6](#p2--6) · [7](#p2--7) · [8](#p2--8) · [9](#p2--9) · [10](#p2--10) · [11](#p2--11) · [12](#p2--12)
 - [Práctica 3 — Monitores](#práctica-3--monitores): [4](#p3--4) · [5](#p3--5)
-- [Práctica 4 — Pasaje de Mensajes](#práctica-4--pasaje-de-mensajes): PMA [1](#p4-pma--1) · [2](#p4-pma--2) · [3](#p4-pma--3) · [4](#p4-pma--4) · PMS [1](#p4-pms--1) · [2](#p4-pms--2) · [3](#p4-pms--3) · [4](#p4-pms--4)
+- [Práctica 4 — Pasaje de Mensajes](#práctica-4--pasaje-de-mensajes): PMA [1](#p4-pma--1) · [2](#p4-pma--2) · [3](#p4-pma--3) · [4](#p4-pma--4) · PMS [1](#p4-pms--1) · [2](#p4-pms--2) · [3](#p4-pms--3) · [4](#p4-pms--4) · [5](#p4-pms--5)
 
 ---
 
@@ -1618,3 +1618,32 @@ Process Persona[id: 1..P]
 ```
 
 *Sanidad:* el orden por id se conoce antes de empezar (alcanza el `for`); el de llegada no (hace falta alguien que anote: el Admin) · **con límite** → Admin con contador y servidor con `for`; **sin límite** → `while (true)`; **varios servidores con límite** → `-1` (PMS 3 b).
+
+## P4 PMS — 5
+*Una máquina expendedora usada por E espectadores en orden de llegada, una vez cada uno. **No hay empleado.***
+
+**Un solo Admin que anota y da el acceso** ⇒ `do` con dos opciones + **`bool libre`** · es **Passing the Baton**: al terminar, si hay fila la máquina **se entrega** al siguiente (`libre` sigue en `false`) · se cuentan pedidos **y** `termino` para que el `do` termine.
+
+```
+Process Admin
+{ cola Fila; int idE; bool libre = true; int llegaron = 0, terminaron = 0;
+  do llegaron < E; Espectador[*]?pedido(idE) ->
+        llegaron++;
+        if (libre) { libre = false; Espectador[idE]!pasa(); }
+        else push(Fila, idE);
+  [] terminaron < E; Espectador[*]?termino() ->
+        terminaron++;
+        if (empty(Fila)) libre = true;
+        else { pop(Fila, idE); Espectador[idE]!pasa(); }
+  od
+}
+
+Process Espectador[id: 1..E]
+{ Admin!pedido(id);
+  Admin?pasa();
+  usarMaquina();
+  Admin!termino();
+}
+```
+
+*Sanidad:* `empty(Fila)` **no** dice si la máquina está libre (nadie esperando ≠ nadie usando) · con Empleado aparte (4 c) es un coordinador; con un solo Admin es PtB.
