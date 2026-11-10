@@ -1862,3 +1862,57 @@ end Calcular;
 ```
 
 *Sanidad:* 10 × 2 llamadas = 20 vueltas · entry declarado con modo y tipo igual al `accept` · el Coordinador sólo suma 10 números.
+
+### Variante con `loop` (parciales 2023 y 2025)
+*Se repite para siempre con un dato nuevo por ronda.* **Barrera `Siguiente`** afuera del `for` de 2N (si no, un Worker rápido ocupa el lugar de otro y las rondas se mezclan) · `when Comenzar'count = 0` para despachar primero al que arranca.
+
+```ada
+Procedure Sucursales is
+   task Coordinador is
+      entry Comenzar (a: OUT integer);
+      entry Resultado (c: IN integer);
+      entry Siguiente;
+   end Coordinador;
+
+   task type Worker;
+   arrWorkers: array (1..N) of Worker;
+
+   task body Worker is
+      articulo, cant: integer;
+   begin
+      loop
+         Coordinador.Comenzar(articulo);
+         cant := ObtenerVentas(articulo);
+         Coordinador.Resultado(cant);
+         Coordinador.Siguiente;
+      end loop;
+   end Worker;
+
+   task body Coordinador is
+      articulo, total: integer;
+   begin
+      loop
+         articulo := generarArticulo;
+         total := 0;
+         for i in 1..2*N loop
+            select
+               accept Comenzar (a: OUT integer) do
+                  a := articulo;
+               end Comenzar;
+            or
+               when (Comenzar'count = 0) =>
+                  accept Resultado (c: IN integer) do
+                     total := total + c;
+                  end Resultado;
+            end select;
+         end loop;
+         for i in 1..N loop
+            accept Siguiente;
+         end loop;
+      end loop;
+   end Coordinador;
+
+begin
+   null;
+end Sucursales;
+```

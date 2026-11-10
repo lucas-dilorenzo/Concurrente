@@ -112,3 +112,78 @@ Es **sólo una señal**: no tiene parámetros ni `do` (como el `accept Usar;` de
 - **El Coordinador no recorre ningún vector:** sólo suma 10 números y divide. ✅
 - **Cada entry declarado tiene su `accept`**, con los mismos parámetros. ✅
 - **Todas las tareas terminan:** los Workers después de entregar, el Coordinador después de las 20 vueltas. ✅
+
+---
+
+## 4. Variante con `loop` (parciales 2023 sucursales y 2025 recomendaciones)
+
+*"Cuando termina de procesar un artículo, comienza con el siguiente."* Todo se repite para siempre, y el Coordinador le **manda** el dato a buscar.
+
+### El bug si sólo se agrega el `loop`
+**El `for` de 2N vueltas es una planilla con 2N casilleros**, y el `select` anota a cualquiera que esté en la cola sin mirar quién es. Un Worker rápido termina, entrega y **vuelve a llamar a `Comenzar` en la misma ronda**: ocupa el casillero de otro, la ronda se cierra sin el más lento, y su resultado **cae en el total del artículo siguiente**. No es un problema de eficiencia: **el resultado da mal.**
+
+En el ej 7 no pasaba porque cada Worker llamaba exactamente 2 veces en su vida.
+
+### La solución: barrera `Siguiente` (R8) al cierre de cada ronda
+**Afuera** del `for` de 2N, un `for` de **N** `accept Siguiente`. El Worker rápido queda en esa cola hasta que entregaron todos.
+
+```ada
+Procedure Sucursales is
+   task Coordinador is
+      entry Comenzar (a: OUT integer);
+      entry Resultado (c: IN integer);
+      entry Siguiente;
+   end Coordinador;
+
+   task type Worker;
+   arrWorkers: array (1..N) of Worker;
+
+   task body Worker is
+      articulo, cant: integer;
+   begin
+      loop
+         Coordinador.Comenzar(articulo);
+         cant := ObtenerVentas(articulo);
+         Coordinador.Resultado(cant);
+         Coordinador.Siguiente;
+      end loop;
+   end Worker;
+
+   task body Coordinador is
+      articulo, total: integer;
+   begin
+      loop
+         articulo := generarArticulo;
+         total := 0;
+         for i in 1..2*N loop
+            select
+               accept Comenzar (a: OUT integer) do
+                  a := articulo;
+               end Comenzar;
+            or
+               when (Comenzar'count = 0) =>
+                  accept Resultado (c: IN integer) do
+                     total := total + c;
+                  end Resultado;
+            end select;
+         end loop;
+         for i in 1..N loop
+            accept Siguiente;
+         end loop;
+      end loop;
+   end Coordinador;
+
+begin
+   null;
+end Sucursales;
+```
+
+### `when (Comenzar'count = 0)` en `Resultado`
+No es para la corrección (eso lo resuelve la barrera): es para **maximizar la concurrencia**. Si uno espera para arrancar y otro para entregar, primero se despacha al que va a trabajar. Es `'count` usado para dar prioridad, por la tarea dueña del entry (R3).
+
+| | Ej 7 (una vez) | Variante con `loop` |
+|---|---|---|
+| Worker | 2 llamadas en su vida | `loop`, **3** llamadas por ronda |
+| `Comenzar` | Señal pelada | Devuelve el dato (`OUT`) |
+| Barrera `Siguiente` | No hace falta | **Obligatoria** |
+| `when Comenzar'count = 0` | Opcional | La cátedra lo pone |
