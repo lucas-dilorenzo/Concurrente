@@ -7,7 +7,7 @@
 - [Práctica 2 — Semáforos](#práctica-2--semáforos): [1](#p2--1) · [2](#p2--2) · [3](#p2--3) · [4](#p2--4) · [5](#p2--5) · [6](#p2--6) · [7](#p2--7) · [8](#p2--8) · [9](#p2--9) · [10](#p2--10) · [11](#p2--11) · [12](#p2--12)
 - [Práctica 3 — Monitores](#práctica-3--monitores): [4](#p3--4) · [5](#p3--5)
 - [Práctica 4 — Pasaje de Mensajes](#práctica-4--pasaje-de-mensajes): PMA [1](#p4-pma--1) · [2](#p4-pma--2) · [3](#p4-pma--3) · [4](#p4-pma--4) · PMS [1](#p4-pms--1) · [2](#p4-pms--2) · [3](#p4-pms--3) · [4](#p4-pms--4) · [5](#p4-pms--5)
-- [Práctica 5 — Rendezvous (Ada)](#práctica-5--rendezvous-ada): [2](#p5--2)
+- [Práctica 5 — Rendezvous (Ada)](#práctica-5--rendezvous-ada): [1](#p5--1) · [2](#p5--2)
 
 ---
 
@@ -1654,6 +1654,81 @@ Process Espectador[id: 1..E]
 # Práctica 5 — Rendezvous (Ada)
 
 > **Consideraciones de la Práctica 5:** no hay variables compartidas · los parámetros del `accept` sólo existen en su cuerpo · `select` del cliente: **una** llamada y **una** opción (`or delay` o `else`) · `select` del servidor: varios `accept` con o sin `when`, sin mezclar con llamadas · después de un `when` siempre un `accept`, y la condición no usa los parámetros · `'count` sólo lo consulta la tarea dueña del entry · aprovechar la comunicación bidireccional.
+
+## P5 — 1
+*Puente de un sentido que soporta 5 unidades: auto 1, camioneta 2, camión 3. (b) prioridad a los camiones.*
+
+**R2:** un entry por tipo (el `when` no puede usar parámetros) + `LiberarPuente(peso)` sin condición · suma afuera del `accept`, resta adentro (usa el parámetro) · (b) **R3**: `EntrarCamion'count = 0` en autos y camionetas.
+
+### a) Misma prioridad
+
+```ada
+Procedure Transito is
+   task Puente is
+      entry EntrarAuto;
+      entry EntrarCamioneta;
+      entry EntrarCamion;
+      entry LiberarPuente (peso: IN integer);
+   end Puente;
+
+   task type Auto;        arrAutos: array (1..A) of Auto;
+   task type Camioneta;   arrCamionetas: array (1..B) of Camioneta;
+   task type Camion;      arrCamiones: array (1..C) of Camion;
+
+   task body Puente is
+      pesoTotal: integer := 0;
+   begin
+      loop
+         select
+            when pesoTotal + 1 <= 5 => accept EntrarAuto;
+                                       pesoTotal := pesoTotal + 1;
+         or
+            when pesoTotal + 2 <= 5 => accept EntrarCamioneta;
+                                       pesoTotal := pesoTotal + 2;
+         or
+            when pesoTotal + 3 <= 5 => accept EntrarCamion;
+                                       pesoTotal := pesoTotal + 3;
+         or
+            accept LiberarPuente (peso: IN integer) do
+               pesoTotal := pesoTotal - peso;
+            end LiberarPuente;
+         end select;
+      end loop;
+   end Puente;
+
+   task body Auto is
+   begin
+      Puente.EntrarAuto;
+      cruzar;
+      Puente.LiberarPuente(1);
+   end Auto;
+   -- Camioneta y Camion: iguales, con su entry y su peso (2 y 3)
+
+begin
+   null;
+end Transito;
+```
+
+### b) Prioridad a los camiones
+
+```ada
+select
+   when (pesoTotal + 1 <= 5) and (EntrarCamion'count = 0) => accept EntrarAuto;
+                                                             pesoTotal := pesoTotal + 1;
+or
+   when (pesoTotal + 2 <= 5) and (EntrarCamion'count = 0) => accept EntrarCamioneta;
+                                                             pesoTotal := pesoTotal + 2;
+or
+   when pesoTotal + 3 <= 5 => accept EntrarCamion;
+                              pesoTotal := pesoTotal + 3;
+or
+   accept LiberarPuente (peso: IN integer) do
+      pesoTotal := pesoTotal - peso;
+   end LiberarPuente;
+end select;
+```
+
+*Sanidad:* un `or` entre cada par de alternativas · las declaraciones antes del `begin` se ejecutan una vez · sin paréntesis en llamadas sin parámetros.
 
 ## P5 — 2
 *Banco con un único empleado que atiende por orden de llegada; clientes que pagan y retiran el comprobante.*
