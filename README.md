@@ -95,6 +95,7 @@ En [`REPASOS CONCU/`](REPASOS%20CONCU/) están mis escrituras de práctica de lo
 |---|---|---|
 | [1](PRACTICA/Practica%205%20-%20Ejercicio%201.md) | Puente de 5 unidades: autos, camionetas, camiones (a, b) | **Un entry por tipo** (el `when` no usa parámetros) + salir sin condición · suma afuera del `accept`, resta adentro · (b) prioridad con `EntrarCamion'count = 0` |
 | [2](PRACTICA/Practica%205%20-%20Ejercicio%202.md) | Banco con un empleado: normal, 10 min, inmediato, 10 min + otro intento (a–d) | **Sintaxis armada de a poco** · una llamada va y vuelve: sin Admin ni id · el tiempo lo maneja el **cliente** (`or delay` / `else`) · `select` anidados · los dos tipos de `select` |
+| [7](PRACTICA/Practica%205%20-%20Ejercicio%207.md) | Promedio de 1 millón entre 10 Workers, una vez | **R9:** los **Workers llaman** (el Coordinador no los recorre: se clavaría en el lento) · `for 1..2*N` con `select` · `accept Comenzar;` pelado · cada Worker devuelve la suma |
 
 *(En progreso.)* El mapa de qué molde va en cada ejercicio está en la sección 6 del [repaso de Rendezvous y Ada](REPASOS/Teoria%207%20-%20Repaso%20(Rendezvous%20y%20Ada).md).
 

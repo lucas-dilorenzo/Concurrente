@@ -7,7 +7,7 @@
 - [Práctica 2 — Semáforos](#práctica-2--semáforos): [1](#p2--1) · [2](#p2--2) · [3](#p2--3) · [4](#p2--4) · [5](#p2--5) · [6](#p2--6) · [7](#p2--7) · [8](#p2--8) · [9](#p2--9) · [10](#p2--10) · [11](#p2--11) · [12](#p2--12)
 - [Práctica 3 — Monitores](#práctica-3--monitores): [4](#p3--4) · [5](#p3--5)
 - [Práctica 4 — Pasaje de Mensajes](#práctica-4--pasaje-de-mensajes): PMA [1](#p4-pma--1) · [2](#p4-pma--2) · [3](#p4-pma--3) · [4](#p4-pma--4) · PMS [1](#p4-pms--1) · [2](#p4-pms--2) · [3](#p4-pms--3) · [4](#p4-pms--4) · [5](#p4-pms--5)
-- [Práctica 5 — Rendezvous (Ada)](#práctica-5--rendezvous-ada): [1](#p5--1) · [2](#p5--2)
+- [Práctica 5 — Rendezvous (Ada)](#práctica-5--rendezvous-ada): [1](#p5--1) · [2](#p5--2) · [7](#p5--7)
 
 ---
 
@@ -1813,3 +1813,52 @@ end Cliente;
 ```
 
 *Sanidad:* tiempo con decimal (`600.0`) · después de `or delay`/`else` siempre una sentencia (`null;`) · dos `select`, dos `end select`.
+
+## P5 — 7
+*Promedio de un vector de 1 millón repartido entre 10 Workers (100 mil cada uno). El Coordinador decide cuándo arrancar y se queda con el resultado. Una sola vez.*
+
+**R9:** los **Workers llaman** (`Comenzar`, `Resultado`) · el Coordinador **no** recorre a los Workers (se clavaría en el lento) · `for 1..2*N` con `select` · cada Worker devuelve la **suma**, se divide al final.
+
+```ada
+Procedure Calcular is
+   task Coordinador is
+      entry Comenzar;
+      entry Resultado (suma: IN integer);
+   end Coordinador;
+
+   task type Worker;
+   arrWorkers: array (1..10) of Worker;
+
+   task body Worker is
+      v: vector;
+      suma: integer := 0;
+   begin
+      Coordinador.Comenzar;
+      for i in 1..100000 loop
+         suma := suma + v(i);
+      end loop;
+      Coordinador.Resultado(suma);
+   end Worker;
+
+   task body Coordinador is
+      total: integer := 0;
+      promedio: float;
+   begin
+      for i in 1..2*10 loop
+         select
+            accept Comenzar;
+         or
+            accept Resultado (suma: IN integer) do
+               total := total + suma;
+            end Resultado;
+         end select;
+      end loop;
+      promedio := total / 1000000;
+   end Coordinador;
+
+begin
+   null;
+end Calcular;
+```
+
+*Sanidad:* 10 × 2 llamadas = 20 vueltas · entry declarado con modo y tipo igual al `accept` · el Coordinador sólo suma 10 números.
