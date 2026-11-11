@@ -125,6 +125,16 @@ En [`PARCIAL 1 - MEMORIA COMPARTIDA/MODELOS/`](PARCIAL%201%20-%20MEMORIA%20COMPA
 
 **Dato del formato:** el parcial son **dos ejercicios** —uno de semáforos y uno de monitores— y **no se escribe justificación**: código, precondiciones y comentarios cortos. En los 51 enunciados viejos relevados, **49 piden orden de llegada o prioridad**.
 
+### Memoria Distribuida
+
+En [`PARCIAL 2 - MEMORIA DISTRIBUIDA/MODELOS/`](PARCIAL%202%20-%20MEMORIA%20DISTRIBUIDA/MODELOS/) van los modelos sacados de los 10 parciales viejos de distribuida:
+
+| Archivo | Qué tiene |
+|---|---|
+| [**Moldes — Ada**](PARCIAL%202%20-%20MEMORIA%20DISTRIBUIDA/MODELOS/Moldes%20-%20Ada.md) | A1 **prioridad de 3 niveles con `'count`** (el hospital, sale en 5 parciales) resuelto, y punteros a A2–A4 |
+
+**Dato del formato:** desde 2024 son **tres ejercicios**, uno de PMA, uno de PMS y uno de Ada.
+
 ---
 
 ## 🧭 Las dos ideas que atraviesan todo
