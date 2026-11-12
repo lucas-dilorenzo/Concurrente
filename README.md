@@ -131,7 +131,7 @@ En [`PARCIAL 2 - MEMORIA DISTRIBUIDA/MODELOS/`](PARCIAL%202%20-%20MEMORIA%20DIST
 
 | Archivo | Qué tiene |
 |---|---|
-| [**Moldes — Ada**](PARCIAL%202%20-%20MEMORIA%20DISTRIBUIDA/MODELOS/Moldes%20-%20Ada.md) | A1 **prioridad de 3 niveles con `'count`** (el hospital, sale en 5 parciales) resuelto, y punteros a A2–A4 |
+| [**Moldes — Ada**](PARCIAL%202%20-%20MEMORIA%20DISTRIBUIDA/MODELOS/Moldes%20-%20Ada.md) | Los **tres modelos con nombre**: **Prioridad** (hospital), **Workers** (WordCount y sus 3 variantes) y **Timeout** (Banco Central), cada uno con su esqueleto y frase gatillo |
 | [**Hoja de sintaxis**](PARCIAL%202%20-%20MEMORIA%20DISTRIBUIDA/MODELOS/Hoja%20de%20sintaxis.md) | **Para la noche antes:** PMA, PMS y Ada lado a lado, las estructuras que deciden, las 8 reglas de Ada que más se olvidan, terminación y checklist |
 | [**Moldes — PMA**](PARCIAL%202%20-%20MEMORIA%20DISTRIBUIDA/MODELOS/Moldes%20-%20PMA.md) | Sintaxis mínima y los 4 modelos con su enunciado: M1 canal compartido · M2 terminación con `false` · M3 `empty()` y tareas administrativas · M4 prioridad con canal por nivel + `señal` |
 | [**Simulacro 1 — Resuelto**](PARCIAL%202%20-%20MEMORIA%20DISTRIBUIDA/MODELOS/Simulacro%201%20-%20Resuelto.md) | Impresoras en PMA y PMS, y el Banco Central en Ada, con los errores |

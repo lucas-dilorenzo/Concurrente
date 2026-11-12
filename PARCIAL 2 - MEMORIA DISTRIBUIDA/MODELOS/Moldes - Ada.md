@@ -2,16 +2,21 @@
 
 > **De dónde salen:** los 10 parciales de memoria distribuida de 2022 a 2025 (carpeta `Parciales y soluciones anteriores`, sin subir). Desde 2024 el parcial son **3 ejercicios: PMA, PMS y Ada**.
 
-| # | Modelo | Veces en parciales | Dónde está escrito |
-|---|---|---|---|
-| **A1** | **Prioridad de 3 niveles con `'count`** | **5** (hospital, aeropuerto, maratón, cobros digitales, banco premium) | Acá abajo |
-| A2 | Coordinador y workers: una vez, K rondas o infinito | 4 (WordCount, recomendaciones, sucursales, stock) | Acá abajo + [Práctica 5 — Ej. 7](../../PRACTICA/Practica%205%20-%20Ejercicio%207.md) |
-| A3 | Recurso con capacidad + prioridad por tipo (128 núcleos de 1/2/3) | 1 | [Práctica 5 — Ej. 1](../../PRACTICA/Practica%205%20-%20Ejercicio%201.md) (el puente) |
-| A4 | Cliente con `or delay` / `else` + contador de intentos (UP16) | 2 | [Práctica 5 — Ej. 2](../../PRACTICA/Practica%205%20-%20Ejercicio%202.md) dentro de un `while` |
+## Los tres modelos
+
+| Nombre | Quién decide | Frase gatillo | Estructura clave | Veces en parciales |
+|---|---|---|---|---|
+| **1. Prioridad** | El **servidor** elige a quién atender | *"tienen prioridad"* | `select` de `accept` con `when X'count = 0` | **5** (hospital, aeropuerto, maratón, cobros digitales, banco premium) + capacidad (128 núcleos, el puente) |
+| **2. Workers** | Los **workers** llaman cuando terminan | *"distribuido en N"*, *"calcula el total"* | `for 2*N` con `select` | **4** (WordCount, recomendaciones, sucursales, stock) |
+| **3. Timeout** | El **cliente** se cansa de esperar | *"a lo sumo X"*, *"si no lo atienden inmediatamente"* | `select` de **una llamada** + `or delay` / `else` | **3** (UP16, banco premium, lectores/escritores) + Banco Central del repaso |
+
+**Timeout puede venir solo** (Banco Central, UP16) **o pegado a los otros dos** (banco premium 2022 = prioridad + timeout en el regular).
+
+Ejercicios de la práctica: Prioridad → [P5 Ej. 1](../../PRACTICA/Practica%205%20-%20Ejercicio%201.md) (el puente) · Workers → [P5 Ej. 7](../../PRACTICA/Practica%205%20-%20Ejercicio%207.md) · Timeout → [P5 Ej. 2](../../PRACTICA/Practica%205%20-%20Ejercicio%202.md) (el banco).
 
 ---
 
-## A1 — Prioridad de 3 niveles: la farmacia del hospital (parcial del 10-11-25)
+## 1. Prioridad — la farmacia del hospital (parcial del 10-11-25)
 
 > En la farmacia de un hospital hay una **única ventanilla** para dispensar medicamentos. Los pacientes internados deben retirar sus medicamentos presentando una **receta** (un único retiro por persona). Los pacientes son atendidos en el orden de llegada, pero **con prioridad**: los de **urgencia** tienen prioridad sobre los de **internación general**, y ambos sobre los **ambulatorios**. Cada paciente entrega su receta y recibe la medicación correspondiente. *Notas: `obtenerPrioridad()` retorna 0 urgencia, 1 internado general, 2 ambulatorio; `obtenerReceta()` retorna la receta del paciente; `dispensarMedicamento(receta)` le retorna al empleado el medicamento. El empleado atiende de a un paciente por vez, según la prioridad. **Todas las tareas deben finalizar.***
 
@@ -162,7 +167,7 @@ end loop;
 **La trampa:** si algún cliente se puede ir, el `for 1..P` del Empleado queda bloqueado esperando a uno que ya no está ⇒ `loop` + `or terminate`.
 ---
 
-## A2 — Coordinador y workers: WordCount (parcial del 4-11-24) y sus tres variantes
+## 2. Workers — WordCount (parcial del 4-11-24) y sus tres variantes
 
 > El problema WordCount consiste en calcular la cantidad de veces que aparece una palabra en un texto. La base de datos de texto está **distribuida en N partes**. Un **administrador** determina la palabra a buscar y se la envía a las **N tareas contadoras** para que la busquen en su parte. Finalmente, el administrador **calcula el total** de apariciones. *Notas: los contadores tienen `contarPalabras(pal)`; el administrador tiene `obtenerPalabra()`. Se resuelve **una única vez** y hay que **maximizar la concurrencia**.*
 
@@ -272,3 +277,44 @@ end WordCount;
 | **K** | **Cuántas rondas** | *"K palabras"*, *"una única vez"* (K = 1), *"sigue con el siguiente"* (K = ∞) |
 
 El `for 2*N` es **una ronda** (cada uno de los N llama 2 veces); el `for K` repite la ronda entera. *Un profesor con 30 alumnos y 3 exámenes:* adentro 60 vueltas, afuera 3.
+
+---
+
+## 3. Timeout — el Banco Central (Práctica de repaso MD, Ada 1)
+
+> La página web del Banco Central exhibe las cotizaciones del dólar de **20 bancos**. Una **tarea programada** actualiza la página **en forma periódica** consultando la **API** de cada banco, **de a una por vez**, esperando **a lo sumo 5 segundos**. Si no respondió, se muestra **vacía** la información de ese banco.
+
+La solución completa está en [Simulacro 1 — Resuelto](Simulacro%201%20-%20Resuelto.md). Es **el cliente del banco (b) con `or delay`**, pero en vez de llamar a **un** empleado, **recorre N servidores con un `for`**.
+
+### El esqueleto
+
+```ada
+-- El que consulta (una sola task, sin entries: task Programada;)
+[nada | loop]                                  -- "en forma periódica" → loop
+   for i in 1..N loop                          -- "de a uno por vez"
+      select
+         arrServidor(i).Consulta(r(i));        -- UNA sola llamada
+      or delay X.0;                            -- "a lo sumo X" (o: else = "inmediatamente")
+         r(i) := vacio;                        -- el plan B
+      end select;
+   end loop;
+[nada | end loop;]
+
+-- Cada servidor
+loop
+   accept Consulta (r: OUT T) do r := ...; end Consulta;
+end loop;
+```
+
+**Variante con reintentos** (UP16, parcial del 25-11-24): el cliente envuelve el `select` en `while (intentos < 3) and not atendido loop`, y en el plan B hace `caminata; intentos := intentos + 1;`.
+
+### No confundirlo con Workers
+
+| | Workers | Timeout en serie |
+|---|---|---|
+| ¿Quién llama? | **Los workers** al coordinador | **El que consulta** a cada servidor |
+| ¿`for` sobre los N? | **No**: sería la trampa | **Sí**: el enunciado dice *"de a uno por vez"* |
+| Se reconoce por | *"maximizar la concurrencia"*, *"distribuido en N"* | *"consulta de a uno"*, *"espera a lo sumo X"* |
+
+- **Los servidores no necesitan `Ident`:** el que consulta ya elige a quién llama con `arrServidor(i)`, y el `OUT` vuelve solo.
+- **El `select` del cliente:** una sola llamada, una sola salida (`or delay` **o** `else`), siempre una sentencia después, tiempo con decimal.
