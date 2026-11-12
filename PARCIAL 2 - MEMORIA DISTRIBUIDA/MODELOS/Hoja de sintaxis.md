@@ -80,7 +80,7 @@ Tiempo **con decimal** · `else` = *"inmediatamente"* · `or delay` = *"a lo sum
 
 ## 6. Checklist antes de entregar
 
-- [ ] ¿Usé el **mecanismo que pide** el enunciado?
+- [ ] si ¿Usé el **mecanismo que pide** el enunciado?
 - [ ] PMA/PMS: `Process`, `tipo nombre;` · Ada: `task`, `nombre: tipo;`, `:=`
 - [ ] PMS: cada `!` tiene su `?` · índice en `Proceso[id]!`
 - [ ] Ada: cada `entry` tiene su `accept`, igual nombre y parámetros · `OUT` adentro del `do`

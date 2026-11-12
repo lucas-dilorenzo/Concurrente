@@ -5,7 +5,7 @@
 | # | Modelo | Veces en parciales | Dónde está escrito |
 |---|---|---|---|
 | **A1** | **Prioridad de 3 niveles con `'count`** | **5** (hospital, aeropuerto, maratón, cobros digitales, banco premium) | Acá abajo |
-| A2 | Coordinador y workers, una vez o con `loop` + barrera `Siguiente` | 4 (WordCount, recomendaciones, sucursales, stock) | [Práctica 5 — Ej. 7](../../PRACTICA/Practica%205%20-%20Ejercicio%207.md) |
+| A2 | Coordinador y workers: una vez, K rondas o infinito | 4 (WordCount, recomendaciones, sucursales, stock) | Acá abajo + [Práctica 5 — Ej. 7](../../PRACTICA/Practica%205%20-%20Ejercicio%207.md) |
 | A3 | Recurso con capacidad + prioridad por tipo (128 núcleos de 1/2/3) | 1 | [Práctica 5 — Ej. 1](../../PRACTICA/Practica%205%20-%20Ejercicio%201.md) (el puente) |
 | A4 | Cliente con `or delay` / `else` + contador de intentos (UP16) | 2 | [Práctica 5 — Ej. 2](../../PRACTICA/Practica%205%20-%20Ejercicio%202.md) dentro de un `while` |
 
@@ -114,3 +114,116 @@ end Farmacia;
 - **Con un urgente esperando**, los `when` de los otros dos son falsos. ✅
 - **Orden de llegada dentro de cada prioridad:** cada cola de entry es FIFO. ✅
 - **El `OUT` se asigna adentro del `do`.** ✅
+
+---
+
+## A2 — Coordinador y workers: WordCount (parcial del 4-11-24) y sus tres variantes
+
+> El problema WordCount consiste en calcular la cantidad de veces que aparece una palabra en un texto. La base de datos de texto está **distribuida en N partes**. Un **administrador** determina la palabra a buscar y se la envía a las **N tareas contadoras** para que la busquen en su parte. Finalmente, el administrador **calcula el total** de apariciones. *Notas: los contadores tienen `contarPalabras(pal)`; el administrador tiene `obtenerPalabra()`. Se resuelve **una única vez** y hay que **maximizar la concurrencia**.*
+
+> **Cómo se resolvió:** el 12-nov, antes del parcial. Lucas lo confundió con Passing the Baton y pidió la resolución.
+
+### No es Passing the Baton
+
+| | Passing the Baton | Coordinador (R9) |
+|---|---|---|
+| ¿Qué pasa? | **Un recurso** que usan **de a uno** y se van pasando | **Un trabajo** que se **reparte** entre N que trabajan **a la vez** |
+| Ejemplos | Bicicleta, SUBE, PMS 5, R6 | Promedio (ej 7), WordCount, sucursales, recomendaciones |
+| Se reconoce por | *"de a una por vez"*, *"usa y deja al siguiente"* | *"distribuido en N partes"*, *"envía a las N"*, *"calcula el total"* |
+
+### La solución (una vez)
+
+```ada
+Procedure WordCount is
+   task Admin is
+      entry Palabra (pal: OUT string);
+      entry Cantidad (cant: IN integer);
+   end Admin;
+
+   task type Contador;
+   arrContadores: array (1..N) of Contador;
+
+   task body Contador is
+      pal: string;
+      cant: integer;
+   begin
+      Admin.Palabra(pal);              -- pido la palabra
+      cant := contarPalabras(pal);     -- busco en mi parte
+      Admin.Cantidad(cant);            -- entrego mi parcial
+   end Contador;
+
+   task body Admin is
+      palabra: string;
+      total: integer := 0;
+   begin
+      palabra := obtenerPalabra;
+      for i in 1..2*N loop
+         select
+            accept Palabra (pal: OUT string) do
+               pal := palabra;
+            end Palabra;
+         or
+            accept Cantidad (cant: IN integer) do
+               total := total + cant;
+            end Cantidad;
+         end select;
+      end loop;
+   end Admin;
+
+begin
+   null;
+end WordCount;
+```
+
+- **Los contadores llaman al Admin** (si el Admin los recorre con un `for`, queda clavado en el lento). La palabra es **`OUT`** para el contador: la recibe.
+- **`2*N`:** cada contador hace 2 llamadas. **El `for` de 2N ya es el corte:** el Admin termina solo.
+- Comparado con el ej 7: `accept Comenzar;` pelado → `accept Palabra (pal: OUT string) do pal := palabra; end Palabra;`. Lo demás, igual.
+
+### Las tres variantes según el enunciado
+
+| El enunciado dice… | Contador | Admin | ¿Barrera `Siguiente`? |
+|---|---|---|---|
+| **1. *"Una única vez"*** (WordCount, ej 7) | **Sin loop** | `for 1..2*N` con `select` | **No** |
+| **2. *"K palabras"*** / *"todas deben terminar"* con varias | **`for k in 1..K loop`** | **`for k in 1..K loop`** con nueva palabra, `for 2*N` y `for N accept Siguiente` | **Sí** |
+| **3. *"Cuando termina, sigue con la siguiente"*** (sucursales, recomendaciones) | **`loop`** | **`loop`** con lo mismo que la 2 | **Sí** |
+
+**La 2 y la 3 son el mismo código: sólo cambia `for k in 1..K loop` por `loop`.**
+
+```ada
+-- Contador
+[nada | for k in 1..K loop | loop]
+   Admin.Palabra(pal);
+   cant := contarPalabras(pal);
+   Admin.Cantidad(cant);
+   Admin.Siguiente;                    -- sólo en la 2 y la 3
+[nada | end loop;]
+
+-- Admin
+[nada | for k in 1..K loop | loop]
+   palabra := obtenerPalabra;
+   total := 0;
+   for i in 1..2*N loop
+      select
+         accept Palabra (pal: OUT string) do pal := palabra; end Palabra;
+      or
+         when (Palabra'count = 0) =>   -- opcional: despachar primero al que arranca
+            accept Cantidad (cant: IN integer) do total := total + cant; end Cantidad;
+      end select;
+   end loop;
+   for i in 1..N loop                  -- sólo en la 2 y la 3
+      accept Siguiente;
+   end loop;
+[nada | end loop;]
+```
+
+- **¿Por qué la barrera?** Un contador rápido termina, entrega y vuelve a pedir la palabra **en la misma ronda**: ocupa el lugar de otro y los resultados se mezclan entre palabras.
+- **Regla:** Contador y Admin tienen **siempre la misma estructura exterior** (nada / `for 1..K` / `loop`). Si no coinciden, alguno queda bloqueado para siempre.
+
+### N y K no son lo mismo
+
+| | Cuenta… | Sale de… |
+|---|---|---|
+| **N** | **Cuántos trabajan a la vez** | *"distribuida en N partes"*, *"100 sucursales"*, `array (1..N)` |
+| **K** | **Cuántas rondas** | *"K palabras"*, *"una única vez"* (K = 1), *"sigue con el siguiente"* (K = ∞) |
+
+El `for 2*N` es **una ronda** (cada uno de los N llama 2 veces); el `for K` repite la ronda entera. *Un profesor con 30 alumnos y 3 exámenes:* adentro 60 vueltas, afuera 3.
