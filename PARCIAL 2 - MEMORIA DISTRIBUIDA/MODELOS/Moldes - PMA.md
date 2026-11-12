@@ -23,6 +23,79 @@
 | *"si no hay nadie, hace otra cosa"* | **M3**: `empty()`; con varios empleados, por un Admin |
 | *"tienen prioridad"* | **M4**: canal por nivel + `señal` |
 
+
+---
+
+## ⭐ El esqueleto único: M1 y sus variantes (un solo molde para memorizar)
+
+> **La base es el M1:** el canal compartido es la fila. Las variantes sólo agregan piezas: un Admin (M2, M3) o canales por nivel (M4).
+
+```
+chan pedido(int, Dato);                        -- [M4] un canal por nivel + chan señal();
+chan respuesta[N](Resp);
+[M2/M3] chan pedirTrabajo(int);
+[M2/M3] chan trabajo[K](int, Dato);            -- [M2] (bool, int, Dato)
+
+Process Cliente[id: 1..N] {                    -- IGUAL en todas
+  send pedido(id, dato);                       -- [M4] send <canal de mi nivel>(id, dato); send señal();
+  receive respuesta[id](r);
+}
+
+[M1] Process Empleado[id: 1..K] {              -- el canal reparte solo
+       while (true) {
+         receive pedido(idC, dato);
+         send respuesta[idC](f(dato));
+       }
+     }
+
+[M2/M3] Process Empleado[id: 1..K] {           -- le pide trabajo al Admin
+       while (true) {                          -- [M2] while (hay)
+         send pedirTrabajo(id);
+         receive trabajo[id](idC, dato);       -- [M2] (hay, idC, dato)
+         if (idC == -1) hacerOtraCosa();       -- [M3]
+         else send respuesta[idC](f(dato));
+       }
+     }
+
+[M2] Process Admin {                           -- terminan
+       for i = 1 to N {
+         receive pedido(idC, dato);
+         receive pedirTrabajo(idE);
+         send trabajo[idE](true, idC, dato);
+       }
+       for i = 1 to K {
+         receive pedirTrabajo(idE);
+         send trabajo[idE](false, -1, -1);
+       }
+     }
+
+[M3] Process Admin {                           -- si no hay nadie
+       while (true) {
+         receive pedirTrabajo(idE);
+         if (empty(pedido)) send trabajo[idE](-1, -1);
+         else { receive pedido(idC, dato); send trabajo[idE](idC, dato); }
+       }
+     }
+
+[M4] Process Empleado {                        -- prioridad (uno solo)
+       while (true) {
+         receive señal();
+         if (not empty(alta)) receive alta(idC, dato);
+         else if (not empty(media)) receive media(idC, dato);
+         else receive baja(idC, dato);
+         send respuesta[idC](f(dato));
+       }
+     }
+```
+
+| | Gatillo | ¿Admin? | Qué agrega al M1 |
+|---|---|---|---|
+| **M1** | *"alguno de los K"*, *"infinitamente"* | No | Nada |
+| **M2** | *"se retiran cuando no hay más"* | Sí | El empleado **pide trabajo**; el Admin reparte N y después manda **`false`** a cada uno |
+| **M3** | *"si no hay nadie, hace otra cosa"* | Sí, si hay **varios** empleados (con uno solo, pregunta él `empty`) | El Admin pregunta **`empty`** y contesta **`-1`** |
+| **M4** | *"tienen prioridad"* | No | **Un canal por nivel + `señal`**; el empleado mira primero el más importante |
+
+**Fijo en todas:** el Cliente (`send pedido` + `receive respuesta[id]`) · `respuesta[N]` es **arreglo** · el empleado con Admin tiene **su propio canal** `trabajo[id]`.
 ---
 
 ## M1 — Varios empleados con canal compartido
