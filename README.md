@@ -136,6 +136,7 @@ En [`PARCIAL 2 - MEMORIA DISTRIBUIDA/MODELOS/`](PARCIAL%202%20-%20MEMORIA%20DIST
 | [**Gimnasio de reconocimiento — PMA y PMS**](PARCIAL%202%20-%20MEMORIA%20DISTRIBUIDA/MODELOS/Gimnasio%20de%20reconocimiento%20-%20PMA%20y%20PMS.md) | **Enunciados espejo:** el traductor de un problema a PMA, PMS y Ada · cuándo hace falta Admin · orden de llegada vs. por id · dos rondas de reconocimiento |
 | [**Hoja de sintaxis**](PARCIAL%202%20-%20MEMORIA%20DISTRIBUIDA/MODELOS/Hoja%20de%20sintaxis.md) | **Para la noche antes:** PMA, PMS y Ada lado a lado, las estructuras que deciden, las 8 reglas de Ada que más se olvidan, terminación y checklist |
 | [**Moldes — PMA**](PARCIAL%202%20-%20MEMORIA%20DISTRIBUIDA/MODELOS/Moldes%20-%20PMA.md) | Sintaxis mínima y los 4 modelos con su enunciado: M1 canal compartido · M2 terminación con `false` · M3 `empty()` y tareas administrativas · M4 prioridad con canal por nivel + `señal` |
+| [**Moldes — PMS**](PARCIAL%202%20-%20MEMORIA%20DISTRIBUIDA/MODELOS/Moldes%20-%20PMS.md) | S1 Admin con cola y varios servidores · S2 recurso único con `libre` · S3 por id con `for i` · S4 prioridad con cola por nivel · terminación con `-1` |
 | [**Simulacro 1 — Resuelto**](PARCIAL%202%20-%20MEMORIA%20DISTRIBUIDA/MODELOS/Simulacro%201%20-%20Resuelto.md) | Impresoras en PMA y PMS, y el Banco Central en Ada, con los errores |
 
 **Dato del formato:** desde 2024 son **tres ejercicios**, uno de PMA, uno de PMS y uno de Ada.
