@@ -115,6 +115,51 @@ end Farmacia;
 - **Orden de llegada dentro de cada prioridad:** cada cola de entry es FIFO. ✅
 - **El `OUT` se asigna adentro del `do`.** ✅
 
+
+### El esqueleto de la prioridad, con sus variantes
+
+```ada
+-- Cliente
+[nada | loop]                                   -- ¿vuelve muchas veces?
+   prio := obtenerPrioridad;                    -- sólo si el tipo sale de una función
+   if prio = 0 then
+      [select] Empleado.Alta(d, r);             -- [select] sólo si "se va si espera"
+      [or delay X.0; null; end select;]
+   elsif prio = 1 then
+      Empleado.Media(d, r);
+   else
+      Empleado.Baja(d, r);
+   end if;
+[nada | end loop;]
+
+-- Empleado
+[for i in 1..P loop | loop]                     -- for: todos llegan a ser atendidos
+   select
+      accept Alta (d: IN T; r: OUT T) do r := f(d); end Alta;
+   or
+      when (Alta'count = 0) =>
+         accept Media (d: IN T; r: OUT T) do r := f(d); end Media;
+   or
+      when (Alta'count = 0) and (Media'count = 0) =>
+         accept Baja (d: IN T; r: OUT T) do r := f(d); end Baja;
+   [or
+      terminate;]                               -- sólo con loop + "todas deben terminar"
+   end select;
+end loop;
+```
+
+| Hueco | Opción | Cuándo |
+|---|---|---|
+| Afuera del Empleado | **`for i in 1..P`** | Cada cliente viene una vez y **todos** llegan a ser atendidos |
+| | **`loop`** | *"Atiende continuamente"*, o **algún cliente se puede ir** (no hay P `accept`s seguros) |
+| `or terminate` | Sí | Con `loop` y *"todas las tareas deben terminar"* |
+| `select` en el cliente | `or delay X.0` / `else` | *"Se retira si espera más de X"* / *"si no lo atienden inmediatamente"* |
+| `if` en el cliente | Con `if` | El tipo sale de una **función** (`obtenerPrioridad()`) |
+| | Sin `if`: un `task type` por tipo | El enunciado da **cantidades** (*"R regulares y P premium"*) |
+| `when` | Sólo `'count` | Prioridad pura |
+| | **Capacidad `and` `'count`** + entries de salida sin `when` | Recurso con capacidad (núcleos, puente) |
+
+**La trampa:** si algún cliente se puede ir, el `for 1..P` del Empleado queda bloqueado esperando a uno que ya no está ⇒ `loop` + `or terminate`.
 ---
 
 ## A2 — Coordinador y workers: WordCount (parcial del 4-11-24) y sus tres variantes
