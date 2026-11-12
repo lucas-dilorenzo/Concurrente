@@ -131,6 +131,7 @@ En [`PARCIAL 2 - MEMORIA DISTRIBUIDA/MODELOS/`](PARCIAL%202%20-%20MEMORIA%20DIST
 
 | Archivo | Qué tiene |
 |---|---|
+| [**Ayuda memoria — Parcial MD**](PARCIAL%202%20-%20MEMORIA%20DISTRIBUIDA/MODELOS/Ayuda%20memoria%20-%20Parcial%20MD.md) | **Una hoja con el código de los tres mecanismos:** el esqueleto de PMA, PMS y Ada, qué agregar según el enunciado y las reglas de sintaxis |
 | [**Moldes — Ada**](PARCIAL%202%20-%20MEMORIA%20DISTRIBUIDA/MODELOS/Moldes%20-%20Ada.md) | Los **tres modelos con nombre**: **Prioridad** (hospital), **Workers** (WordCount y sus 3 variantes) y **Timeout** (Banco Central), cada uno con su esqueleto y frase gatillo |
 | [**Gimnasio de reconocimiento — Ada**](PARCIAL%202%20-%20MEMORIA%20DISTRIBUIDA/MODELOS/Gimnasio%20de%20reconocimiento%20-%20Ada.md) | **Cómo saber si es Prioridad, Workers o Timeout:** tres preguntas fijas en orden, 7 enunciados cortos (dos rondas, la segunda con modelos mezclados) y la secuencia para el parcial |
 | [**Gimnasio de reconocimiento — PMA y PMS**](PARCIAL%202%20-%20MEMORIA%20DISTRIBUIDA/MODELOS/Gimnasio%20de%20reconocimiento%20-%20PMA%20y%20PMS.md) | **Enunciados espejo:** el traductor de un problema a PMA, PMS y Ada · cuándo hace falta Admin · orden de llegada vs. por id · dos rondas de reconocimiento |
