@@ -12,6 +12,56 @@
 
 Sintaxis: `!` de un lado, `?` del otro, **siempre de a pares** · en una guarda **sólo `?`** · con varios del mismo tipo, **siempre índice** en el `!` · `do ... od` termina cuando todas las guardas son falsas.
 
+
+---
+
+## ⭐ El esqueleto único: S1 y su variante S2 (un solo molde para memorizar)
+
+> **El S2 con `bool libre` es el más difícil de PMS.** La cátedra aceptó (bicicleta 2025) una forma más fácil: **el S1 con un solo Encargado** que además espera `liberar`. Es el PMS 4c.
+
+```
+Process Cliente[id: 1..N] {
+  Admin!pedido(id[, dato]);
+  [S1]  Empleado[*]?respuesta(r);          -- o el empleado contesta Cliente[id]!
+  [S2]  Encargado?usar();
+        usarRecurso();
+        Encargado!liberar();
+}
+
+Process Admin {                                         -- IGUAL en S1 y S2
+  cola Fila; int idC[, idE];
+  do Cliente[*]?pedido(idC[, dato]) -> push(Fila, idC);
+  [] not empty(Fila); [S1] Empleado[*]?listo(idE) -> pop(Fila, idC);
+                                                    Empleado[idE]!trabajo(idC);
+                      [S2] Encargado?listo()      -> pop(Fila, idC);
+                                                    Encargado!siguiente(idC);
+  od
+}
+
+[S1] Process Empleado[id: 1..K] {                -- K empleados
+       while (true) {
+         Admin!listo(id);
+         Admin?trabajo(idC);
+         Cliente[idC]!respuesta(f(...));
+       }
+     }
+
+[S2] Process Encargado {                         -- uno solo
+       for i = 1 to N {
+         Admin!listo();
+         Admin?siguiente(idC);
+         Cliente[idC]!usar();
+         Cliente[idC]?liberar();                 -- espero que termine
+       }
+     }
+```
+
+| | S1 (varios servidores) | S2 (recurso de a uno) |
+|---|---|---|
+| ¿Quién avisa "libre"? | Cada **Empleado[id]**, con su id | **El Encargado**, uno solo: sin `[*]` ni id |
+| ¿Qué hace con el cliente? | Lo atiende y le contesta | Le dice `usar` y **espera `liberar`** |
+| ¿Cómo sabe que está libre? | El empleado vuelve a `Admin!listo` | **No hay `bool libre`:** mientras alguien usa, el Encargado está bloqueado en `?liberar` |
+| Terminación | `while (true)` o `-1` con varios | `for i = 1 to N` (una vez cada uno) |
 ---
 
 ## S1 — Admin con cola + varios servidores
